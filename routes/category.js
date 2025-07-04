@@ -6,7 +6,7 @@ import { isAdmin, isAuthenticated } from '../auth/isAuthenticated.js'
 const router = express.Router()
 
 
-router.get("/categories/all", getAllCategories)
+router.get("/categories", getAllCategories)
 
 router.get("/category/:id", getCategory)
 

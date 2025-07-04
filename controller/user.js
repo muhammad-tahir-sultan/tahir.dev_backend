@@ -1,6 +1,4 @@
 import User from "../models/user.js"
-import jwt from 'jsonwebtoken'
-import bcrypt from 'bcrypt'
 import sendEmail from "../sendEmail/sendEmail.js"
 import crypto from 'crypto'
 import cloudinary from 'cloudinary'
@@ -15,7 +13,7 @@ export const registerUser = async (req, res) => {
         if (req.body.image) {
             cloudinaryRes = await cloudinary.v2.uploader.upload(req.body.image,
                 {
-                    folder: "Ghareebstar-User",
+                    folder: "tahirdev-portfolio",
                     crop: "scale",
                     width: 300
 
@@ -39,31 +37,21 @@ export const registerUser = async (req, res) => {
             })
         }
 
-        let hashedPassword = await bcrypt.hash(password, 10)
-
 
         user = await User.create({
-            name, email, password: hashedPassword, image: {
+            name, email, password, image: {
                 public_id: cloudinaryRes?.public_id,
                 url: cloudinaryRes?.secure_url
             }
         })
 
+        console.log('register user', user)
 
-
-        // const userToken = jwt.sign({ _id: user._id }, process.env.JWT_TOKEN_SECRET);
-
-        // return res.cookie("ghareebstar", userToken, {
-        //     httpOnly: true,
-        //     sameSite: "none",
-        //     secure: true,
-        // }).status(201).json({
-        //     success: true,
-        //     message: "User Registered Successfully",
-        //     user
-        // })
-
-        setCookie(user, res, `Registered Successfully!`, 201);
+        return res.status(201).json({
+            success: true,
+            message: "User Registered Successfully",
+            user
+        })
 
     } catch (error) {
         return res.status(500).json({
@@ -96,8 +84,9 @@ export const loginUser = async (req, res) => {
 
         // 1st (argument) is User Entered Password, 2nd is Stored Password in Database
         // comparing user entered password with the stored password in database 
-        let matchPassword = await bcrypt.compare(password, user.password);
+        let matchPassword = await user.password === password
 
+        console.log(matchPassword)
 
         if (!matchPassword) {
             return res.status(401).json({
@@ -106,18 +95,15 @@ export const loginUser = async (req, res) => {
             })
         }
 
+        // Remove password from the response
+        user = user.toObject();
+        delete user.password;
 
-        // const userToken = jwt.sign({ _id: user._id }, process.env.JWT_TOKEN_SECRET);
-        // return res.cookie("ghareebstar", userToken, {
-        //     httpOnly: true,
-        //     sameSite: "none",
-        //     secure: true,
-        // }).status(200).json({
-        //     success: true,
-        //     message: "Logged In Successfully",
-        //     user
-        // })
-        setCookie(user, res, `Welcome Back ${user.name}!`, 200);
+        return res.status(200).json({
+            success: true,
+            message: "Logged In Successfully",
+            user
+        })
 
 
     } catch (error) {
@@ -131,15 +117,28 @@ export const loginUser = async (req, res) => {
 
 export const getMyProfile = async (req, res) => {
     try {
+        // User is already available in req.user from the isAuthenticated middleware
+        const user = req.user;
+
+        // Remove sensitive data
+        const userData = {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            image: user.image,
+            createdAt: user.createdAt
+        };
+
         return res.status(200).json({
             success: true,
-            user: req.user,
-        })
+            user: userData
+        });
     } catch (error) {
         return res.status(500).json({
             success: false,
             message: error.message
-        })
+        });
     }
 }
 
@@ -183,7 +182,7 @@ export const updateUserProfile = async (req, res) => {
 
                 cloudinaryRes = await cloudinary.v2.uploader.upload(req.body.image,
                     {
-                        folder: "Ghareebstar-User",
+                        folder: "tahirdev-portfolio",
                         crop: "scale",
                     },
                 );
@@ -206,12 +205,12 @@ export const updateUserProfile = async (req, res) => {
         }
 
         if (password) {
-            let hashedPassword = await bcrypt.hash(password, 10)
-            user.password = hashedPassword;
+
+            user.password = password;
         }
 
         await user.save()
-        
+
         // Use setCookie utility to generate token and send response
         setCookie(user, res, "Profile Updated Successfully", 200);
     } catch (error) {
@@ -358,9 +357,9 @@ export const resetPassword = async (req, res) => {
         }
 
 
-        let hashedPassword = await bcrypt.hash(newPassword, 10)
+        // let hashedPassword = await bcrypt.hash(newPassword, 10)
 
-        user.password = hashedPassword;
+        user.password = newPassword;
 
         await user.save()
 

@@ -1,6 +1,6 @@
 import express from "express"
 import { addNewProject, updateProject, getAllProjects, deleteProject, getProjectDetail } from "../controller/project.js"
-import { isAdmin, isAuthenticated } from "../auth/isAuthenticated.js"
+// import { isAdmin, isAuthenticated } from "../auth/isAuthenticated.js"
 
 const router = express.Router()
 
@@ -8,13 +8,13 @@ const router = express.Router()
 router.get("/projects", getAllProjects)
 
 
-router.post("/project/new", isAuthenticated, isAdmin, addNewProject)
+router.post("/project/new", addNewProject)
 
-router.get("/project/:id", isAuthenticated, isAdmin, getProjectDetail)
+router.get("/project/:id", getProjectDetail)
 
-router.put("/project/update/:id", isAuthenticated, isAdmin, updateProject)
+router.put("/project/update/:id", updateProject)
 
-router.delete("/project/delete/:id", isAuthenticated, isAdmin, deleteProject)
+router.delete("/project/delete/:id", deleteProject)
 
 
 
